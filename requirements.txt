@@ -3,3 +3,5 @@ tgcrypto
 python-dotenv
 Flask
 waitress
+fastapi
+uvicorn
