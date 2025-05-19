@@ -144,23 +144,24 @@ async def send_file(client, message: Message):
         await message.reply_text(f"❌ Error: {str(e)}")
 
 # -----------------------------
-# Web Server for Koyeb Health Check
+# FastAPI Web Server for Health Check
 # -----------------------------
 app = FastAPI()
 
 @app.get("/")
-def read_root():
+def home():
     return {"status": "ok", "message": "Bot is running and healthy!"}
 
+# Run the web server in background thread
 def run_healthcheck_server():
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
 # -----------------------------
-# Run bot and server
+# Launch everything
 # -----------------------------
 if __name__ == "__main__":
-    print("Starting health check server on port 8000...")
+    print("✅ Starting FastAPI web server on port 8000...")
     threading.Thread(target=run_healthcheck_server, daemon=True).start()
 
-    print("Bot is starting...")
+    print("🤖 Starting Pyrogram bot...")
     bot.run()
