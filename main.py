@@ -33,32 +33,32 @@ bot = Client(
 @bot.on_message(filters.private & filters.command("help"))
 async def help_command(client, message: Message):
     await message.reply_text(
-        "👋 *Welcome to FileToLinks Bot*\n"
-        "🚀 _Your personal file uploader and sharer made simple._\n\n"
+        "**👋 Welcome to FileToLinks Bot**\n"
+        "🚀 *Your personal file uploader and sharer made simple.*\n\n"
 
-        "📦 *What Can I Do?*\n"
+        "**📦 What Can I Do?**\n"
         "• Convert any file you send into a shareable download link.\n"
         "• Supports documents, videos, audios, images, APKs, ZIPs, and more.\n"
         "• Receive an instant download URL with file name, size, and details.\n\n"
 
-        "📖 *How to Use:*\n"
+        "**📖 How to Use:**\n"
         "1️⃣ Send me a file (any type).\n"
         "2️⃣ Wait a moment while I process it.\n"
         "3️⃣ Get your download link with file info and a copyable link.\n\n"
 
-        "📌 *Limitations:*\n"
-        "• Maximum file size depends on Telegram limits (~2GB).\n"
-        "• Link availability depends on file availability on Telegram servers.\n"
-        "• This bot does not store files externally – it uses Telegram’s CDN.\n\n"
+        "**📌 Limitations:**\n"
+        "• Max file size depends on Telegram limits (~2GB).\n"
+        "• Link availability depends on Telegram server availability.\n"
+        "• This bot uses Telegram's CDN; files aren't stored externally.\n\n"
 
-        "🛠 *Need Help?*\n"
-        "If you face any issues or have suggestions,\n"
-        "contact the developer: [@WClientOwner](https://t.me/WClientOwner)\n\n"
+        "**🛠 Need Help?**\n"
+        "For issues or suggestions, contact the dev: [@WClientOwner](https://t.me/WClientOwner)\n\n"
 
-        "ℹ️ *Commands:*\n"
-        "`/start` - Show welcome/help message or retrieve a file.\n"
+        "**ℹ️ Commands:**\n"
+        "`/start` - Show welcome/help or retrieve file\n"
         "`/help` - Display this help section again."
     )
+
 
 @bot.on_message(filters.private & (filters.document | filters.video | filters.audio | filters.photo))
 async def save_file(client, message: Message):
@@ -89,15 +89,16 @@ async def save_file(client, message: Message):
         bot_username = (await client.get_me()).username
         start_link = f"https://t.me/{bot_username}?start={file_id}"
 
-        await message.reply_text(
-            f"📤 **File Uploaded!**\n\n"
-            f"📁 Name: `{file_name}`\n"
-            f"📏 Size: `{round(file_size / 1024 / 1024, 2)} MB`\n"
-            f"📦 Type: `{file_type}`\n"
-            f"⚙️ Hash: `{file_id}`\n\n"
-            f"🔗 **Share Link:**\n[Click Here]({start_link})",
-            disable_web_page_preview=True
-        )
+await message.reply_text(
+    f"**📤 File Uploaded!**\n\n"
+    f"**📁 Name:** `{file_name}`\n"
+    f"**📏 Size:** `{round(file_size / 1024 / 1024, 2)} MB`\n"
+    f"**📦 Type:** `{file_type}`\n"
+    f"**⚙️ Hash:** `{file_id}`\n\n"
+    f"**🔗 Share Link:**\n[Click Here]({start_link})",
+    disable_web_page_preview=True
+)
+
     except Exception as e:
         await message.reply_text(f"❌ Error: {str(e)}")
 
@@ -170,17 +171,16 @@ async def send_file(client, message: Message):
             else:
                 await message.reply_text("❌ File not found or expired.")
         else:
-            await message.reply_photo(
-            photo="https://retrivedmods.neocities.org/assets/channels4_profile.jpg",
-            caption=(
-                "**📂 Welcome to RetrivedMods File To Link Bot!**\n\n"
-                "🚀 Instantly turn any file into a shareable link.\n"
-                "Supports: Photos, Videos, All Times Of Files Upto 4GB!\n"
-                "🔒 Files are stored securely and can be retrieved anytime.\n\n"
-                "✨ *Fast. Premium. Easy.*"
-            ),
-          
-        )
+          await message.reply_photo(
+    photo="https://retrivedmods.neocities.org/assets/channels4_profile.jpg",
+    caption=(
+        "**📂 Welcome to RetrivedMods File To Link Bot!**\n\n"
+        "🚀 Instantly turn any file into a shareable link.\n"
+        "**Supports:** Photos, Videos, All File Types up to 4GB!\n"
+        "🔒 Files are stored securely and can be retrieved anytime.\n\n"
+        "**✨ Fast. Premium. Easy.**"
+    ),
+)
 
     except Exception as e:
         await message.reply_text(f"❌ Error: {str(e)}")
