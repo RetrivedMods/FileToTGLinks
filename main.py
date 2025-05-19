@@ -1,6 +1,5 @@
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from pyrogram.types import Message
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 import os
 import json
 from dotenv import load_dotenv
@@ -15,7 +14,7 @@ API_HASH = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 STORAGE_CHAT_ID = int(os.getenv("STORAGE_CHAT_ID"))
 
-# Load file database
+# Load or initialize file database
 if os.path.exists("files.json"):
     with open("files.json") as f:
         FILE_DB = json.load(f)
@@ -26,16 +25,16 @@ def save_db():
     with open("files.json", "w") as f:
         json.dump(FILE_DB, f)
 
-# Escape text for MarkdownV2 formatting
-def escape_markdown(text):
+# Escape text for Telegram MarkdownV2 formatting
+def escape_markdown(text: str) -> str:
     """
-    Escape characters as per Telegram MarkdownV2 requirements:
+    Escape special characters for Telegram MarkdownV2:
     _ * [ ] ( ) ~ ` > # + - = | { } . !
     """
     escape_chars = r'_*[]()~`>#+-=|{}.!'
     return re.sub(f'([{re.escape(escape_chars)}])', r'\\\1', text)
 
-# Initialize the bot
+# Initialize the bot client
 bot = Client(
     "filestreambot",
     api_id=API_ID,
@@ -88,7 +87,7 @@ async def save_file(client, message: Message):
         media = message.document or message.video or message.audio or message.photo or message.animation
 
         if isinstance(media, list):
-            media = media[-1]  # highest quality photo
+            media = media[-1]  # pick highest quality if photo is list
 
         file_name = getattr(media, "file_name", "Unknown")
         file_size = getattr(media, "file_size", 0)
@@ -135,7 +134,10 @@ async def save_file(client, message: Message):
         )
 
     except Exception as e:
-        await message.reply_text(f"❌ Error: {escape_markdown(str(e))}", parse_mode="MarkdownV2")
+        await message.reply_text(
+            f"❌ Error: {escape_markdown(str(e))}",
+            parse_mode="MarkdownV2"
+        )
 
 
 @bot.on_message(filters.private & filters.command("start"))
@@ -148,41 +150,43 @@ async def send_file(client, message: Message):
                 file_data = FILE_DB[file_id]
                 file_type = file_data["file_type"].lower()
 
+                caption = f"📥 *Here's your file!*\n📁 {escape_markdown(file_data['file_name'])}"
+
                 if "document" in file_type or "application" in file_type:
                     await message.reply_document(
                         file_data["file_id"],
-                        caption=f"📥 *Here's your file!*\n📁 {escape_markdown(file_data['file_name'])}",
+                        caption=caption,
                         parse_mode="MarkdownV2"
                     )
                 elif "video" in file_type:
                     await message.reply_video(
                         file_data["file_id"],
-                        caption=f"📥 *Here's your file!*\n📁 {escape_markdown(file_data['file_name'])}",
+                        caption=caption,
                         parse_mode="MarkdownV2"
                     )
                 elif "audio" in file_type:
                     await message.reply_audio(
                         file_data["file_id"],
-                        caption=f"📥 *Here's your file!*\n📁 {escape_markdown(file_data['file_name'])}",
+                        caption=caption,
                         parse_mode="MarkdownV2"
                     )
                 elif "photo" in file_type:
                     await message.reply_photo(
                         file_data["file_id"],
-                        caption=f"📥 *Here's your file!*\n📁 {escape_markdown(file_data['file_name'])}",
+                        caption=caption,
                         parse_mode="MarkdownV2"
                     )
-                elif "animation" in file_type:  # e.g. gifs or apk if sent as animation
+                elif "animation" in file_type:
                     await message.reply_animation(
                         file_data["file_id"],
-                        caption=f"📥 *Here's your file!*\n📁 {escape_markdown(file_data['file_name'])}",
+                        caption=caption,
                         parse_mode="MarkdownV2"
                     )
                 else:
-                    # fallback to document for unknown types
+                    # fallback
                     await message.reply_document(
                         file_data["file_id"],
-                        caption=f"📥 *Here's your file!*\n📁 {escape_markdown(file_data['file_name'])}",
+                        caption=caption,
                         parse_mode="MarkdownV2"
                     )
             else:
@@ -204,10 +208,12 @@ async def send_file(client, message: Message):
             )
 
     except Exception as e:
-        await message.reply_text(f"❌ Error: {escape_markdown(str(e))}", parse_mode="MarkdownV2")
+        await message.reply_text(
+            f"❌ Error: {escape_markdown(str(e))}",
+            parse_mode="MarkdownV2"
+        )
 
-
-# Flask app to keep web service alive on Render
+# Flask app to keep the bot alive on hosting services
 app = Flask("")
 
 @app.route("/")
@@ -219,8 +225,7 @@ def run_flask():
     app.run(host="0.0.0.0", port=port)
 
 if __name__ == "__main__":
-    # Run Flask in background thread
+    # Run Flask in a background thread
     threading.Thread(target=run_flask).start()
-
     print("Bot is starting...")
     bot.run()
