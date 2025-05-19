@@ -89,15 +89,15 @@ async def save_file(client, message: Message):
         bot_username = (await client.get_me()).username
         start_link = f"https://t.me/{bot_username}?start={file_id}"
 
-await message.reply_text(
-    f"**📤 File Uploaded!**\n\n"
-    f"**📁 Name:** `{file_name}`\n"
-    f"**📏 Size:** `{round(file_size / 1024 / 1024, 2)} MB`\n"
-    f"**📦 Type:** `{file_type}`\n"
-    f"**⚙️ Hash:** `{file_id}`\n\n"
-    f"**🔗 Share Link:**\n[Click Here]({start_link})",
-    disable_web_page_preview=True
-)
+        await message.reply_text(
+            f"**📤 File Uploaded!**\n\n"
+            f"**📁 Name:** `{file_name}`\n"
+            f"**📏 Size:** `{round(file_size / 1024 / 1024, 2)} MB`\n"
+            f"**📦 Type:** `{file_type}`\n"
+            f"**⚙️ Hash:** `{file_id}`\n\n"
+            f"**🔗 Share Link:**\n[Click Here]({start_link})",
+            disable_web_page_preview=True
+        )
 
     except Exception as e:
         await message.reply_text(f"❌ Error: {str(e)}")
@@ -112,75 +112,52 @@ async def send_file(client, message: Message):
                 file_data = FILE_DB[file_id]
                 file_type = file_data["file_type"].lower()
 
+                caption_text = (
+                    f"📥 **Your file is ready!**\n\n"
+                    f"📁 **Name:** `{file_data['file_name']}`\n"
+                    f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
+                    f"✨ *Powered by* [RetrivedMods](https://t.me/RetrivedMods)"
+                )
+
                 if "document" in file_type:
                     await message.reply_document(
                         file_data["file_id"],
-                      caption = (
-    f"📥 **Your file is ready!**\n\n"
-    f"📁 **Name:** `{file_data['file_name']}`\n"
-    f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
-    f"✨ *Powered by* [RetrivedMods](https://t.me/RetrivedMods)"
-)
-
+                        caption=caption_text
                     )
                 elif "video" in file_type:
                     await message.reply_video(
                         file_data["file_id"],
-                       caption = (
-    f"📥 **Your file is ready!**\n\n"
-    f"📁 **Name:** `{file_data['file_name']}`\n"
-    f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
-    f"✨ *Powered by* [RetrivedMods](https://t.me/RetrivedMods)"
-)
-
+                        caption=caption_text
                     )
                 elif "audio" in file_type:
                     await message.reply_audio(
                         file_data["file_id"],
-                       caption = (
-    f"📥 **Your file is ready!**\n\n"
-    f"📁 **Name:** `{file_data['file_name']}`\n"
-    f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
-    f"✨ *Powered by* [RetrivedMods](https://t.me/RetrivedMods)"
-)
-
+                        caption=caption_text
                     )
                 elif "photo" in file_type:
                     await message.reply_photo(
                         file_data["file_id"],
-                       caption = (
-    f"📥 **Your file is ready!**\n\n"
-    f"📁 **Name:** `{file_data['file_name']}`\n"
-    f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
-    f"✨ *Powered by* [RetrivedMods](https://t.me/RetrivedMods)"
-)
-
+                        caption=caption_text
                     )
                 else:
                     # fallback to document
                     await message.reply_document(
                         file_data["file_id"],
-                       caption = (
-    f"📥 **Your file is ready!**\n\n"
-    f"📁 **Name:** `{file_data['file_name']}`\n"
-    f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
-    f"✨ *Powered by* [RetrivedMods](https://t.me/RetrivedMods)"
-)
-
+                        caption=caption_text
                     )
             else:
                 await message.reply_text("❌ File not found or expired.")
         else:
-          await message.reply_photo(
-    photo="https://retrivedmods.neocities.org/assets/channels4_profile.jpg",
-    caption=(
-        "**📂 Welcome to RetrivedMods File To Link Bot!**\n\n"
-        "🚀 Instantly turn any file into a shareable link.\n"
-        "**Supports:** Photos, Videos, All File Types up to 4GB!\n"
-        "🔒 Files are stored securely and can be retrieved anytime.\n\n"
-        "**✨ Fast. Premium. Easy.**"
-    ),
-)
+            await message.reply_photo(
+                photo="https://retrivedmods.neocities.org/assets/channels4_profile.jpg",
+                caption=(
+                    "**📂 Welcome to RetrivedMods File To Link Bot!**\n\n"
+                    "🚀 Instantly turn any file into a shareable link.\n"
+                    "**Supports:** Photos, Videos, All File Types up to 4GB!\n"
+                    "🔒 Files are stored securely and can be retrieved anytime.\n\n"
+                    "**✨ Fast. Premium. Easy.**"
+                ),
+            )
 
     except Exception as e:
         await message.reply_text(f"❌ Error: {str(e)}")
