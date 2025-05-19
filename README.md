@@ -156,4 +156,4 @@ Your donations help keep the bot running and support further development.
   </a>
 </p>
 
-_Made with ❤️ using Pyrogram and Telegram Bot API_
+_Made with ❤️ By RetrivedMods_
