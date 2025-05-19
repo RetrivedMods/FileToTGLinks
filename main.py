@@ -24,23 +24,36 @@ def save_db():
 
 app = Client("filestreambot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
+# Get file type label
+def get_file_label(file_name, media_type):
+    if file_name.lower().endswith(".pdf"):
+        return "📄 PDF Document"
+    elif file_name.lower().endswith(".apk"):
+        return "📱 APK File"
+    elif file_name.lower().endswith(".zip"):
+        return "🗜️ ZIP Archive"
+    elif "video" in str(media_type).lower():
+        return "🎞️ Video"
+    elif "audio" in str(media_type).lower():
+        return "🎵 Audio"
+    elif "photo" in str(media_type).lower():
+        return "🖼️ Photo"
+    else:
+        return "📁 Document"
 
+# Handle file uploads
 @app.on_message(filters.private & (filters.document | filters.video | filters.audio | filters.photo))
 async def save_file(client, message: Message):
     sent = await message.forward(STORAGE_CHAT_ID)
-    file_key = str(sent.id)
+    file_id = str(sent.id)
 
     media = message.document or message.video or message.audio or message.photo
-
-    file_name = getattr(media, "file_name", None)
-    if not file_name and message.photo:
-        file_name = "photo.jpg"  # fallback name for photos
-
+    file_name = getattr(media, "file_name", "Unknown")
     file_size = getattr(media, "file_size", 0)
-    file_type = message.media  # e.g., "document", "video", etc.
+    file_type = message.media
     file_tg_id = media.file_id
 
-    FILE_DB[file_key] = {
+    FILE_DB[file_id] = {
         "file_type": file_type,
         "file_id": file_tg_id,
         "file_name": file_name,
@@ -48,55 +61,51 @@ async def save_file(client, message: Message):
     }
     save_db()
 
-    bot_username = (await client.get_me()).username
-    start_link = f"https://t.me/{bot_username}?start={file_key}"
-
-    reply_text = (
-        "📤 File Uploaded Successfully!\n\n"
-        f"📁 Name: {file_name or 'Unknown'}\n"
-        f"📏 Size: {round(file_size / 1024 / 1024, 2)} MB\n"
-        f"📦 Type: {file_type}\n"
-        f"⚙️ File ID: {file_key}\n\n"
-        f"🔗 Shareable Link:\n{start_link}\n\n"
-        "📥 Send this link to anyone to let them download your file instantly!"
-    )
+    file_label = get_file_label(file_name, file_type)
+    start_link = f"https://t.me/{(await client.get_me()).username}?start={file_id}"
 
     await message.reply_text(
-        reply_text,
+        f"✨ **Premium File Uploaded!**\n\n"
+        f"📁 **Name:** `{file_name}`\n"
+        f"📦 **Type:** `{file_label}`\n"
+        f"📏 **Size:** `{round(file_size / 1024 / 1024, 2)} MB`\n"
+        f"🧬 **Hash ID:** `{file_id}`\n\n"
+        f"🔗 **Direct Link:** [Click Here]({start_link})\n"
+        f"⚡ Powered by *RetrivedMods FileBot*",
         disable_web_page_preview=True
     )
 
-
+# Handle /start command
 @app.on_message(filters.private & filters.command("start"))
 async def send_file(client, message: Message):
     args = message.text.split(" ")
     if len(args) == 2:
-        file_key = args[1]
-        if file_key in FILE_DB:
-            file_data = FILE_DB[file_key]
-            caption = f"📥 Here's your file!\n📁 {file_data['file_name'] or 'Unknown'}"
-
-            file_type = file_data["file_type"]
-            file_id = file_data["file_id"]
-
-            if file_type == "document":
-                await message.reply_document(file_id, caption=caption)
-            elif file_type == "video":
-                await message.reply_video(file_id, caption=caption)
-            elif file_type == "audio":
-                await message.reply_audio(file_id, caption=caption)
-            elif file_type == "photo":
-                await message.reply_photo(file_id, caption=caption)
-            else:
-                await message.reply_document(file_id, caption=caption)
+        file_id = args[1]
+        if file_id in FILE_DB:
+            file_name = FILE_DB[file_id]['file_name']
+            file_label = get_file_label(file_name, FILE_DB[file_id]['file_type'])
+            await message.reply_document(
+                FILE_DB[file_id]["file_id"],
+                caption=(
+                    f"📥 **Here's your premium file!**\n"
+                    f"📁 {file_name}\n"
+                    f"📦 Type: {file_label}\n"
+                    f"💡 Powered by @RetrivedMods"
+                )
+            )
         else:
-            await message.reply_text("❌ Sorry, this file was not found or has expired.")
+            await message.reply("❌ Sorry, this file link is invalid or expired.")
     else:
-        await message.reply_text(
-            "👋 Welcome to FileToLinks Bot!\n\n"
-            "🚀 Send me any file, and I will generate a secure, shareable Telegram link for you instantly.\n\n"
-            "📥 Just send a file to get started!"
+        await message.reply_photo(
+            photo="https://retrivedmods.neocities.org/assets/channels4_profile.jpg",
+            caption=(
+                "**📂 Welcome to RetrivedMods FileBot!**\n\n"
+                "🚀 Instantly turn any file into a shareable link.\n"
+                "Supports: PDF, APK, ZIP, Photos, Videos, Music & more!\n"
+                "🔒 Files are stored securely and can be retrieved anytime.\n\n"
+                "✨ *Fast. Premium. Easy.*"
+            ),
+            parse_mode="Markdown"
         )
-
 
 app.run()
