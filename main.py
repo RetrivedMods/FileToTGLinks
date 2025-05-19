@@ -114,28 +114,58 @@ async def send_file(client, message: Message):
                 if "document" in file_type:
                     await message.reply_document(
                         file_data["file_id"],
-                        caption=f"📥 **Here's your file!**\n📁 {file_data['file_name']} \n ✨ **Join** - t.me/RetrivedMods""
+                      caption = (
+    f"📥 **Your file is ready!**\n\n"
+    f"📁 **Name:** `{file_data['file_name']}`\n"
+    f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
+    f"✨ *Powered by* [RetrivedMods](https://t.me/RetrivedMods)"
+)
+
                     )
                 elif "video" in file_type:
                     await message.reply_video(
                         file_data["file_id"],
-                        caption=f"📥 **Here's your file!**\n📁 {file_data['file_name']} \n ✨ **Join** - t.me/RetrivedMods""
+                       caption = (
+    f"📥 **Your file is ready!**\n\n"
+    f"📁 **Name:** `{file_data['file_name']}`\n"
+    f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
+    f"✨ *Powered by* [RetrivedMods](https://t.me/RetrivedMods)"
+)
+
                     )
                 elif "audio" in file_type:
                     await message.reply_audio(
                         file_data["file_id"],
-                        caption=f"📥 **Here's your file!**\n📁 {file_data['file_name']} \n ✨ **Join** - t.me/RetrivedMods""
+                       caption = (
+    f"📥 **Your file is ready!**\n\n"
+    f"📁 **Name:** `{file_data['file_name']}`\n"
+    f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
+    f"✨ *Powered by* [RetrivedMods](https://t.me/RetrivedMods)"
+)
+
                     )
                 elif "photo" in file_type:
                     await message.reply_photo(
                         file_data["file_id"],
-                        caption=f"📥 **Here's your file!**\n📁 {file_data['file_name']} \n ✨ **Join** - t.me/RetrivedMods""
+                       caption = (
+    f"📥 **Your file is ready!**\n\n"
+    f"📁 **Name:** `{file_data['file_name']}`\n"
+    f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
+    f"✨ *Powered by* [RetrivedMods](https://t.me/RetrivedMods)"
+)
+
                     )
                 else:
                     # fallback to document
                     await message.reply_document(
                         file_data["file_id"],
-                        caption=f"📥 **Here's your file!**\n📁 {file_data['file_name']} \n ✨ **Join** - t.me/RetrivedMods""
+                       caption = (
+    f"📥 **Your file is ready!**\n\n"
+    f"📁 **Name:** `{file_data['file_name']}`\n"
+    f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
+    f"✨ *Powered by* [RetrivedMods](https://t.me/RetrivedMods)"
+)
+
                     )
             else:
                 await message.reply_text("❌ File not found or expired.")
