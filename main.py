@@ -34,7 +34,7 @@ bot = Client(
 async def help_command(client, message: Message):
     await message.reply_text(
         "**👋 Welcome to FileToLinks Bot**\n"
-        "🚀 *Your personal file uploader and sharer made simple.*\n\n"
+        "🚀 Your personal file uploader and sharer made simple.\n\n"
 
         "**📦 What Can I Do?**\n"
         "• Convert any file you send into a shareable download link.\n"
@@ -95,7 +95,7 @@ async def save_file(client, message: Message):
             f"**📏 Size:** `{round(file_size / 1024 / 1024, 2)} MB`\n"
             f"**📦 Type:** `{file_type}`\n"
             f"**⚙️ Hash:** `{file_id}`\n\n"
-            f"**🔗 Share Link:**\n[Click Here]({start_link})",
+            f"**🔗 Share Link:**\n(`{start_link}`)",
             disable_web_page_preview=True
         )
 
@@ -116,7 +116,7 @@ async def send_file(client, message: Message):
                     f"📥 **Your file is ready!**\n\n"
                     f"📁 **Name:** `{file_data['file_name']}`\n"
                     f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
-                    f"✨ *Powered by* [RetrivedMods](https://t.me/RetrivedMods)"
+                    f"✨ **Powered by** [RetrivedMods](https://t.me/RetrivedMods)"
                 )
 
                 if "document" in file_type:
