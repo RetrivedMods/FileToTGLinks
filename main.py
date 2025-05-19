@@ -1,11 +1,11 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message
-import os
-import json
 from dotenv import load_dotenv
 from fastapi import FastAPI
 import threading
 import uvicorn
+import os
+import json
 
 # Load environment variables
 load_dotenv()
@@ -34,32 +34,18 @@ bot = Client(
     bot_token=BOT_TOKEN
 )
 
-# Help command
+# FastAPI instance
+app = FastAPI()
+
+@app.get("/")
+def health():
+    return {"status": "ok", "message": "Bot is running and healthy."}
+
+# Pyrogram bot logic
 @bot.on_message(filters.private & filters.command("help"))
 async def help_command(client, message: Message):
-    await message.reply_text(
-        "**👋 Welcome to FileToLinks Bot**\n"
-        "🚀 Your personal file uploader and sharer made simple.\n\n"
-        "**📦 What Can I Do?**\n"
-        "• Convert any file you send into a shareable download link.\n"
-        "• Supports documents, videos, audios, images, APKs, ZIPs, and more.\n"
-        "• Receive an instant download URL with file name, size, and details.\n\n"
-        "**📖 How to Use:**\n"
-        "1️⃣ Send me a file (any type).\n"
-        "2️⃣ Wait a moment while I process it.\n"
-        "3️⃣ Get your download link with file info and a copyable link.\n\n"
-        "**📌 Limitations:**\n"
-        "• Max file size depends on Telegram limits (~2GB).\n"
-        "• Link availability depends on Telegram server availability.\n"
-        "• This bot uses Telegram's CDN; files aren't stored externally.\n\n"
-        "**🛠 Need Help?**\n"
-        "For issues or suggestions, contact the dev: [@WClientOwner](https://t.me/WClientOwner)\n\n"
-        "**ℹ️ Commands:**\n"
-        "`/start` - Show welcome/help or retrieve file\n"
-        "`/help` - Display this help section again."
-    )
+    await message.reply_text("ℹ️ Help: Send me a file and I’ll give you a download link!")
 
-# Handle file uploads
 @bot.on_message(filters.private & (filters.document | filters.video | filters.audio | filters.photo))
 async def save_file(client, message: Message):
     try:
@@ -67,7 +53,7 @@ async def save_file(client, message: Message):
         file_id = str(sent.id)
 
         media = message.document or message.video or message.audio or message.photo
-        if isinstance(media, list):  # for photos, sometimes returns a list
+        if isinstance(media, list):  # photos may be list
             media = media[-1]
 
         file_name = getattr(media, "file_name", "Unknown")
@@ -87,81 +73,34 @@ async def save_file(client, message: Message):
         start_link = f"https://t.me/{bot_username}?start={file_id}"
 
         await message.reply_text(
-            f"**📤 File Uploaded!**\n\n"
-            f"**📁 Name:** `{file_name}`\n"
-            f"**📏 Size:** `{round(file_size / 1024 / 1024, 2)} MB`\n"
-            f"**📦 Type:** `{file_type}`\n"
-            f"**⚙️ Hash:** `{file_id}`\n\n"
-            f"**🔗 Share Link:**\n({start_link})",
-            disable_web_page_preview=True
+            f"**📤 Uploaded!**\n📁 `{file_name}`\n🔗 {start_link}"
         )
-
     except Exception as e:
-        await message.reply_text(f"❌ Error: {str(e)}")
+        await message.reply_text(f"❌ Error: {e}")
 
-# Start command
 @bot.on_message(filters.private & filters.command("start"))
-async def send_file(client, message: Message):
-    try:
-        args = message.text.split(" ")
-        if len(args) == 2:
-            file_id = args[1]
-            if file_id in FILE_DB:
-                file_data = FILE_DB[file_id]
-                file_type = file_data["file_type"].lower()
-
-                caption_text = (
-                    f"📥 **Your file is ready!**\n\n"
-                    f"📁 **Name:** `{file_data['file_name']}`\n"
-                    f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
-                    f"✨ **Powered by** [RetrivedMods](https://t.me/RetrivedMods)"
-                )
-
-                if "document" in file_type:
-                    await message.reply_document(file_data["file_id"], caption=caption_text)
-                elif "video" in file_type:
-                    await message.reply_video(file_data["file_id"], caption=caption_text)
-                elif "audio" in file_type:
-                    await message.reply_audio(file_data["file_id"], caption=caption_text)
-                elif "photo" in file_type:
-                    await message.reply_photo(file_data["file_id"], caption=caption_text)
-                else:
-                    await message.reply_document(file_data["file_id"], caption=caption_text)
-            else:
-                await message.reply_text("❌ File not found or expired.")
+async def start(client, message: Message):
+    args = message.text.split(" ")
+    if len(args) == 2:
+        file_id = args[1]
+        if file_id in FILE_DB:
+            data = FILE_DB[file_id]
+            await message.reply_document(data["file_id"], caption=data["file_name"])
         else:
-            await message.reply_photo(
-                photo="https://retrivedmods.neocities.org/assets/channels4_profile.jpg",
-                caption=(
-                    "**📂 Welcome to RetrivedMods File To Link Bot!**\n\n"
-                    "🚀 Instantly turn any file into a shareable link.\n"
-                    "**Supports:** Photos, Videos, All File Types up to 4GB!\n"
-                    "🔒 Files are stored securely and can be retrieved anytime.\n\n"
-                    "**✨ Fast. Premium. Easy.**"
-                )
-            )
-    except Exception as e:
-        await message.reply_text(f"❌ Error: {str(e)}")
+            await message.reply_text("❌ File not found or expired.")
+    else:
+        await message.reply_text("👋 Send me a file and I’ll give you a download link!")
 
-# -----------------------------
-# FastAPI Web Server for Health Check
-# -----------------------------
-app = FastAPI()
-
-@app.get("/")
-def home():
-    return {"status": "ok", "message": "Bot is running and healthy!"}
-
-# Run the web server in background thread
-def run_healthcheck_server():
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-
-# -----------------------------
-# Launch everything
-# -----------------------------
-if __name__ == "__main__":
-    print("✅ Starting FastAPI web server on port 8000...")
-    threading.Thread(target=run_healthcheck_server, daemon=True).start()
-
+# Run Pyrogram bot in a background thread
+def run_bot():
     print("🤖 Starting Pyrogram bot...")
     bot.run()
+
+# Entry point
+if __name__ == "__main__":
+    # Start the bot in a thread
+    threading.Thread(target=run_bot, daemon=True).start()
+    
+    # Start FastAPI main thread (required for Koyeb)
+    print("✅ Starting FastAPI server on port 8000...")
+    uvicorn.run("main:app", host="0.0.0.0", port=8000)
