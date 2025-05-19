@@ -25,14 +25,13 @@ def save_db():
     with open("files.json", "w") as f:
         json.dump(FILE_DB, f)
 
-# Escape text for MarkdownV2 formatting
-def escape_markdown(text):
+# Proper MarkdownV2 escaping as per Telegram requirements
+def escape_markdown_v2(text: str) -> str:
     """
-    Escape characters as per Telegram MarkdownV2 requirements:
-    _ * [ ] ( ) ~ ` > # + - = | { } . !
+    Escapes all special characters for Telegram MarkdownV2 parsing.
     """
-    escape_chars = r'_*[]()~`>#+-=|{}.!'
-    return re.sub(f'([{re.escape(escape_chars)}])', r'\\\1', text)
+    escape_chars = r"_*[]()~`>#+-=|{}.!\\"
+    return re.sub(f"([{re.escape(escape_chars)}])", r"\\\1", text)
 
 # Initialize the bot
 bot = Client(
@@ -72,7 +71,7 @@ async def help_command(client, message: Message):
         "`/help` - Display this help section again."
     )
     await message.reply_text(
-        escape_markdown(text),
+        escape_markdown_v2(text),
         disable_web_page_preview=True,
         parse_mode="MarkdownV2"
     )
@@ -80,11 +79,9 @@ async def help_command(client, message: Message):
 @bot.on_message(filters.private & (filters.document | filters.video | filters.audio | filters.photo | filters.animation))
 async def save_file(client, message: Message):
     try:
-        # Forward message to storage chat
         sent = await message.forward(STORAGE_CHAT_ID)
         file_key = str(sent.id)
 
-        # Extract media from original message
         media = message.document or message.video or message.audio or message.animation
         file_type = None
         file_name = None
@@ -104,23 +101,19 @@ async def save_file(client, message: Message):
             media = message.animation
             file_type = "animation"
         elif message.photo:
-            # photo is a list of sizes - pick highest quality (last)
             photo_sizes = message.photo
             media = photo_sizes[-1]
             file_type = "photo"
         else:
-            # fallback
             media = None
 
         if media:
             file_name = getattr(media, "file_name", None)
             if not file_name and file_type == "photo":
-                # Photos usually do not have file_name, so assign something
                 file_name = "photo.jpg"
             file_size = getattr(media, "file_size", 0)
             file_id = media.file_id
         else:
-            # no media? Just fallback
             file_name = "Unknown"
             file_size = 0
             file_id = None
@@ -138,10 +131,10 @@ async def save_file(client, message: Message):
 
         reply_text = (
             f"📤 *File Uploaded!*\n\n"
-            f"📁 Name: `{escape_markdown(file_name)}`\n"
+            f"📁 Name: `{escape_markdown_v2(file_name)}`\n"
             f"📏 Size: `{round(file_size / 1024 / 1024, 2)} MB`\n"
-            f"📦 Type: `{escape_markdown(file_type or 'unknown')}`\n"
-            f"⚙️ Hash: `{escape_markdown(file_key)}`\n\n"
+            f"📦 Type: `{escape_markdown_v2(file_type or 'unknown')}`\n"
+            f"⚙️ Hash: `{escape_markdown_v2(file_key)}`\n\n"
             f"🔗 *Share Link:*\n`{start_link}`\n\n"
             f"📋 *Tap the link above to copy it.*"
         )
@@ -165,7 +158,7 @@ async def save_file(client, message: Message):
         )
 
     except Exception as e:
-        await message.reply_text(f"❌ Error: {escape_markdown(str(e))}", parse_mode="MarkdownV2")
+        await message.reply_text(f"❌ Error: {escape_markdown_v2(str(e))}", parse_mode="MarkdownV2")
 
 
 @bot.on_message(filters.private & filters.command("start"))
@@ -180,9 +173,8 @@ async def send_file(client, message: Message):
                 file_id = file_data["file_id"]
                 file_name = file_data["file_name"]
 
-                caption = f"📥 *Here's your file!*\n📁 {escape_markdown(file_name)}"
+                caption = f"📥 *Here's your file!*\n📁 {escape_markdown_v2(file_name)}"
 
-                # Based on saved file type, send appropriate media
                 if file_type == "document":
                     await message.reply_document(file_id, caption=caption, parse_mode="MarkdownV2")
                 elif file_type == "video":
@@ -190,11 +182,12 @@ async def send_file(client, message: Message):
                 elif file_type == "audio":
                     await message.reply_audio(file_id, caption=caption, parse_mode="MarkdownV2")
                 elif file_type == "photo":
+                    # Photo captions with markdown sometimes cause problems,
+                    # safer to send without markdown or just escape
                     await message.reply_photo(file_id, caption=caption, parse_mode="MarkdownV2")
                 elif file_type == "animation":
                     await message.reply_animation(file_id, caption=caption, parse_mode="MarkdownV2")
                 else:
-                    # fallback to document
                     await message.reply_document(file_id, caption=caption, parse_mode="MarkdownV2")
             else:
                 await message.reply_text(
@@ -202,7 +195,6 @@ async def send_file(client, message: Message):
                     parse_mode="MarkdownV2"
                 )
         else:
-            # No argument, show welcome/start message
             await message.reply_photo(
                 photo="https://retrivedmods.neocities.org/assets/channels4_profile.jpg",
                 caption=(
@@ -216,8 +208,7 @@ async def send_file(client, message: Message):
             )
 
     except Exception as e:
-        await message.reply_text(f"❌ Error: {escape_markdown(str(e))}", parse_mode="MarkdownV2")
-
+        await message.reply_text(f"❌ Error: {escape_markdown_v2(str(e))}", parse_mode="MarkdownV2")
 
 # Flask app to keep web service alive on Render or similar
 app = Flask("")
@@ -231,8 +222,6 @@ def run_flask():
     app.run(host="0.0.0.0", port=port)
 
 if __name__ == "__main__":
-    # Run Flask in background thread
     threading.Thread(target=run_flask).start()
-
     print("Bot is starting...")
     bot.run()
