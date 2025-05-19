@@ -22,90 +22,138 @@ def save_db():
     with open("files.json", "w") as f:
         json.dump(FILE_DB, f)
 
-app = Client("filestreambot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+# Initialize the bot
+bot = Client(
+    "filestreambot",
+    api_id=API_ID,
+    api_hash=API_HASH,
+    bot_token=BOT_TOKEN
+)
 
-# Get file type label
-def get_file_label(file_name, media_type):
-    if file_name.lower().endswith(".pdf"):
-        return "📄 PDF Document"
-    elif file_name.lower().endswith(".apk"):
-        return "📱 APK File"
-    elif file_name.lower().endswith(".zip"):
-        return "🗜️ ZIP Archive"
-    elif "video" in str(media_type).lower():
-        return "🎞️ Video"
-    elif "audio" in str(media_type).lower():
-        return "🎵 Audio"
-    elif "photo" in str(media_type).lower():
-        return "🖼️ Photo"
-    else:
-        return "📁 Document"
-
-# Handle file uploads
-@app.on_message(filters.private & (filters.document | filters.video | filters.audio | filters.photo))
-async def save_file(client, message: Message):
-    sent = await message.forward(STORAGE_CHAT_ID)
-    file_id = str(sent.id)
-
-    media = message.document or message.video or message.audio or message.photo
-    file_name = getattr(media, "file_name", "Unknown")
-    file_size = getattr(media, "file_size", 0)
-    file_type = message.media
-    file_tg_id = media.file_id
-
-    FILE_DB[file_id] = {
-        "file_type": file_type,
-        "file_id": file_tg_id,
-        "file_name": file_name,
-        "file_size": file_size
-    }
-    save_db()
-
-    file_label = get_file_label(file_name, file_type)
-    start_link = f"https://t.me/{(await client.get_me()).username}?start={file_id}"
-
+@bot.on_message(filters.private & filters.command("help"))
+async def help_command(client, message: Message):
     await message.reply_text(
-        f"✨ **Premium File Uploaded!**\n\n"
-        f"📁 **Name:** `{file_name}`\n"
-        f"📦 **Type:** `{file_label}`\n"
-        f"📏 **Size:** `{round(file_size / 1024 / 1024, 2)} MB`\n"
-        f"🧬 **Hash ID:** `{file_id}`\n\n"
-        f"🔗 **Direct Link:** [Click Here]({start_link})\n"
-        f"⚡ Powered by *RetrivedMods FileBot*",
-        disable_web_page_preview=True
+        "👋 *Welcome to FileToLinks Bot*\n"
+        "🚀 _Your personal file uploader and sharer made simple._\n\n"
+
+        "📦 *What Can I Do?*\n"
+        "• Convert any file you send into a shareable download link.\n"
+        "• Supports documents, videos, audios, images, APKs, ZIPs, and more.\n"
+        "• Receive an instant download URL with file name, size, and details.\n\n"
+
+        "📖 *How to Use:*\n"
+        "1️⃣ Send me a file (any type).\n"
+        "2️⃣ Wait a moment while I process it.\n"
+        "3️⃣ Get your download link with file info and a copyable link.\n\n"
+
+        "📌 *Limitations:*\n"
+        "• Maximum file size depends on Telegram limits (~2GB).\n"
+        "• Link availability depends on file availability on Telegram servers.\n"
+        "• This bot does not store files externally – it uses Telegram’s CDN.\n\n"
+
+        "🛠 *Need Help?*\n"
+        "If you face any issues or have suggestions,\n"
+        "contact the developer: [@WClientOwner](https://t.me/WClientOwner)\n\n"
+
+        "ℹ️ *Commands:*\n"
+        "`/start` - Show welcome/help message or retrieve a file.\n"
+        "`/help` - Display this help section again."
     )
 
-# Handle /start command
-@app.on_message(filters.private & filters.command("start"))
+@bot.on_message(filters.private & (filters.document | filters.video | filters.audio | filters.photo))
+async def save_file(client, message: Message):
+    try:
+        sent = await message.forward(STORAGE_CHAT_ID)
+        file_id = str(sent.id)
+
+        # Get the actual media object
+        media = message.document or message.video or message.audio or message.photo
+
+        # Handle photo lists if any (usually photo is a single object)
+        if isinstance(media, list):
+            media = media[-1]  # highest quality photo
+
+        file_name = getattr(media, "file_name", "Unknown")
+        file_size = getattr(media, "file_size", 0)
+        file_type = message.media
+        file_tg_id = media.file_id
+
+        FILE_DB[file_id] = {
+            "file_type": str(file_type),
+            "file_id": file_tg_id,
+            "file_name": file_name,
+            "file_size": file_size
+        }
+        save_db()
+
+        bot_username = (await client.get_me()).username
+        start_link = f"https://t.me/{bot_username}?start={file_id}"
+
+        await message.reply_text(
+            f"📤 **File Uploaded!**\n\n"
+            f"📁 Name: `{file_name}`\n"
+            f"📏 Size: `{round(file_size / 1024 / 1024, 2)} MB`\n"
+            f"📦 Type: `{file_type}`\n"
+            f"⚙️ Hash: `{file_id}`\n\n"
+            f"🔗 **Share Link:**\n[Click Here]({start_link})",
+            disable_web_page_preview=True
+        )
+    except Exception as e:
+        await message.reply_text(f"❌ Error: {str(e)}")
+
+@bot.on_message(filters.private & filters.command("start"))
 async def send_file(client, message: Message):
-    args = message.text.split(" ")
-    if len(args) == 2:
-        file_id = args[1]
-        if file_id in FILE_DB:
-            file_name = FILE_DB[file_id]['file_name']
-            file_label = get_file_label(file_name, FILE_DB[file_id]['file_type'])
-            await message.reply_document(
-                FILE_DB[file_id]["file_id"],
-                caption=(
-                    f"📥 **Here's your premium file!**\n"
-                    f"📁 {file_name}\n"
-                    f"📦 Type: {file_label}\n"
-                    f"💡 Powered by @RetrivedMods"
-                )
-            )
+    try:
+        args = message.text.split(" ")
+        if len(args) == 2:
+            file_id = args[1]
+            if file_id in FILE_DB:
+                file_data = FILE_DB[file_id]
+                file_type = file_data["file_type"].lower()
+
+                if "document" in file_type:
+                    await message.reply_document(
+                        file_data["file_id"],
+                        caption=f"📥 **Here's your file!**\n📁 {file_data['file_name']} \n ✨ **Join** - t.me/RetrivedMods""
+                    )
+                elif "video" in file_type:
+                    await message.reply_video(
+                        file_data["file_id"],
+                        caption=f"📥 **Here's your file!**\n📁 {file_data['file_name']} \n ✨ **Join** - t.me/RetrivedMods""
+                    )
+                elif "audio" in file_type:
+                    await message.reply_audio(
+                        file_data["file_id"],
+                        caption=f"📥 **Here's your file!**\n📁 {file_data['file_name']} \n ✨ **Join** - t.me/RetrivedMods""
+                    )
+                elif "photo" in file_type:
+                    await message.reply_photo(
+                        file_data["file_id"],
+                        caption=f"📥 **Here's your file!**\n📁 {file_data['file_name']} \n ✨ **Join** - t.me/RetrivedMods""
+                    )
+                else:
+                    # fallback to document
+                    await message.reply_document(
+                        file_data["file_id"],
+                        caption=f"📥 **Here's your file!**\n📁 {file_data['file_name']} \n ✨ **Join** - t.me/RetrivedMods""
+                    )
+            else:
+                await message.reply_text("❌ File not found or expired.")
         else:
-            await message.reply("❌ Sorry, this file link is invalid or expired.")
-    else:
-        await message.reply_photo(
+            await message.reply_photo(
             photo="https://retrivedmods.neocities.org/assets/channels4_profile.jpg",
             caption=(
-                "**📂 Welcome to RetrivedMods FileBot!**\n\n"
+                "**📂 Welcome to RetrivedMods File To Link Bot!**\n\n"
                 "🚀 Instantly turn any file into a shareable link.\n"
-                "Supports: PDF, APK, ZIP, Photos, Videos, Music & more!\n"
+                "Supports: Photos, Videos, All Times Of Files Upto 4GB!\n"
                 "🔒 Files are stored securely and can be retrieved anytime.\n\n"
                 "✨ *Fast. Premium. Easy.*"
             ),
-            parse_mode="Markdown"
+          
         )
 
-app.run()
+    except Exception as e:
+        await message.reply_text(f"❌ Error: {str(e)}")
+
+print("Bot is starting...")
+bot.run()
