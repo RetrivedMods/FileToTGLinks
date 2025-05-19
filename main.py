@@ -3,6 +3,8 @@ from pyrogram.types import Message
 import os
 import json
 from dotenv import load_dotenv
+from flask import Flask
+import threading
 
 load_dotenv()
 
@@ -46,10 +48,8 @@ async def save_file(client, message: Message):
         sent = await message.forward(STORAGE_CHAT_ID)
         file_id = str(sent.id)
 
-        # Get the actual media object
         media = message.document or message.video or message.audio or message.photo
 
-        # Handle photo lists if any (usually photo is a single object)
         if isinstance(media, list):
             media = media[-1]  # highest quality photo
 
@@ -112,7 +112,6 @@ async def send_file(client, message: Message):
                         caption=f"📥 **Here's your file!**\n📁 {file_data['file_name']}"
                     )
                 else:
-                    # fallback to document
                     await message.reply_document(
                         file_data["file_id"],
                         caption=f"📥 **Here's your file!**\n📁 {file_data['file_name']}"
@@ -121,8 +120,25 @@ async def send_file(client, message: Message):
                 await message.reply_text("❌ File not found or expired.")
         else:
             await message.reply_text("👋 Send me a file and I'll give you a shareable download link!")
+
     except Exception as e:
         await message.reply_text(f"❌ Error: {str(e)}")
 
-print("Bot is starting...")
-bot.run()
+# Flask app to keep web service alive on Render
+app = Flask("")
+
+@app.route("/")
+def home():
+    return "Bot is running!"
+
+def run_flask():
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
+
+if __name__ == "__main__":
+    import threading
+    # Run Flask in background thread
+    threading.Thread(target=run_flask).start()
+
+    print("Bot is starting...")
+    bot.run()
