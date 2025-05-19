@@ -102,5 +102,6 @@ if __name__ == "__main__":
     threading.Thread(target=run_bot, daemon=True).start()
     
     # Start FastAPI main thread (required for Koyeb)
-    print("✅ Starting FastAPI server on port 8000...")
-    uvicorn.run("main:app", host="0.0.0.0", port=8000)
+    print("✅ Starting FastAPI web server on port 8000...")
+    # Pass the FastAPI app instance directly, not as a string
+    uvicorn.run(app, host="0.0.0.0", port=8000)
