@@ -35,11 +35,25 @@ bot = Client(
 @bot.on_message(filters.private & filters.command("help"))
 async def help_command(client, message: Message):
     await message.reply_text(
-        "👋 **Welcome to the File Stream Bot!**\n\n"
-        "Just send me any file (document, video, audio, photo) and I'll give you a shareable download link.\n\n"
-        "**Commands:**\n"
-        "/start - Get a welcome message or retrieve a file using a share link.\n"
-        "/help - Show this help message."
+       "**👋 Welcome to FileToLinks Bot**\n"
+        "🚀 Your personal file uploader and sharer made simple.\n\n"
+        "**📦 What Can I Do?**\n"
+        "• Convert any file you send into a shareable download link.\n"
+        "• Supports documents, videos, audios, images, APKs, ZIPs, and more.\n"
+        "• Receive an instant download URL with file name, size, and details.\n\n"
+        "**📖 How to Use:**\n"
+        "1️⃣ Send me a file (any type).\n"
+        "2️⃣ Wait a moment while I process it.\n"
+        "3️⃣ Get your download link with file info and a copyable link.\n\n"
+        "**📌 Limitations:**\n"
+        "• Max file size depends on Telegram limits (~2GB).\n"
+        "• Link availability depends on Telegram server availability.\n"
+        "• This bot uses Telegram's CDN; files aren't stored externally.\n\n"
+        "**🛠 Need Help?**\n"
+        "For issues or suggestions, contact the dev: [@WClientOwner](https://t.me/WClientOwner)\n\n"
+        "**ℹ️ Commands:**\n"
+        "`/start` - Show welcome/help or retrieve file\n"
+        "`/help` - Display this help section again."
     )
 
 @bot.on_message(filters.private & (filters.document | filters.video | filters.audio | filters.photo))
@@ -70,12 +84,12 @@ async def save_file(client, message: Message):
         start_link = f"https://t.me/{bot_username}?start={file_id}"
 
         await message.reply_text(
-            f"📤 **File Uploaded!**\n\n"
-            f"📁 Name: `{file_name}`\n"
-            f"📏 Size: `{round(file_size / 1024 / 1024, 2)} MB`\n"
-            f"📦 Type: `{file_type}`\n"
-            f"⚙️ Hash: `{file_id}`\n\n"
-            f"🔗 **Share Link:**\n[Click Here]({start_link})",
+             f"**📤 File Uploaded!**\n\n"
+            f"**📁 Name:** `{file_name}`\n"
+            f"**📏 Size:** `{round(file_size / 1024 / 1024, 2)} MB`\n"
+            f"**📦 Type:** `{file_type}`\n"
+            f"**⚙️ Hash:** `{file_id}`\n\n"
+            f"**🔗 Share Link:** (`{start_link}`)",
             disable_web_page_preview=True
         )
     except Exception as e:
@@ -94,32 +108,56 @@ async def send_file(client, message: Message):
                 if "document" in file_type:
                     await message.reply_document(
                         file_data["file_id"],
-                        caption=f"📥 **Here's your file!**\n📁 {file_data['file_name']}"
+                      caption=  f"📥 **Your file is ready!**\n\n"
+                    f"📁 **Name:** `{file_data['file_name']}`\n"
+                    f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
+                    f"✨ **Powered by** [RetrivedMods](https://t.me/RetrivedMods)"
                     )
                 elif "video" in file_type:
                     await message.reply_video(
                         file_data["file_id"],
-                        caption=f"📥 **Here's your file!**\n📁 {file_data['file_name']}"
+                        caption=  f"📥 **Your file is ready!**\n\n"
+                    f"📁 **Name:** `{file_data['file_name']}`\n"
+                    f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
+                    f"✨ **Powered by** [RetrivedMods](https://t.me/RetrivedMods)"
                     )
                 elif "audio" in file_type:
                     await message.reply_audio(
                         file_data["file_id"],
-                        caption=f"📥 **Here's your file!**\n📁 {file_data['file_name']}"
+                       caption=  f"📥 **Your file is ready!**\n\n"
+                    f"📁 **Name:** `{file_data['file_name']}`\n"
+                    f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
+                    f"✨ **Powered by** [RetrivedMods](https://t.me/RetrivedMods)"
                     )
                 elif "photo" in file_type:
                     await message.reply_photo(
                         file_data["file_id"],
-                        caption=f"📥 **Here's your file!**\n📁 {file_data['file_name']}"
+                        caption=  f"📥 **Your file is ready!**\n\n"
+                    f"📁 **Name:** `{file_data['file_name']}`\n"
+                    f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
+                    f"✨ **Powered by** [RetrivedMods](https://t.me/RetrivedMods)"
                     )
                 else:
                     await message.reply_document(
                         file_data["file_id"],
-                        caption=f"📥 **Here's your file!**\n📁 {file_data['file_name']}"
+                         caption=  f"📥 **Your file is ready!**\n\n"
+                    f"📁 **Name:** `{file_data['file_name']}`\n"
+                    f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
+                    f"✨ **Powered by** [RetrivedMods](https://t.me/RetrivedMods)"
                     )
             else:
                 await message.reply_text("❌ File not found or expired.")
         else:
-            await message.reply_text("👋 Send me a file and I'll give you a shareable download link!")
+            await message.reply_photo(
+                photo="https://camo.githubusercontent.com/cc0b6a3547991fa106f7265c07b3793bdea083130f91d68497347a6adc5085f9/68747470733a2f2f74656c656772612e70682f66696c652f3464313234343030623938356232666536656531632e6a7067",
+                caption=(
+                    "**📂 Welcome to RetrivedMods File To Link Bot!**\n\n"
+                    "🚀 Instantly turn any file into a shareable link.\n"
+                    "**Supports:** Photos, Videos, All File Types up to 4GB!\n"
+                    "🔒 Files are stored securely and can be retrieved anytime.\n\n"
+                    "**✨ Fast. Premium. Easy.**"
+                )
+            )
 
     except Exception as e:
         await message.reply_text(f"❌ Error: {str(e)}")
