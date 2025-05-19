@@ -3,7 +3,6 @@ from pyrogram.types import Message
 import os
 import json
 from dotenv import load_dotenv
-import re
 
 load_dotenv()
 
@@ -23,14 +22,8 @@ def save_db():
     with open("files.json", "w") as f:
         json.dump(FILE_DB, f)
 
-def escape_markdown(text: str) -> str:
-    """
-    Escape text for Telegram MarkdownV2.
-    """
-    escape_chars = r'_*[]()~`>#+-=|{}.!'
-    return re.sub(f"([{re.escape(escape_chars)}])", r"\\\1", text)
-
 app = Client("filestreambot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+
 
 @app.on_message(filters.private & (filters.document | filters.video | filters.audio | filters.photo))
 async def save_file(client, message: Message):
@@ -42,7 +35,7 @@ async def save_file(client, message: Message):
     file_name = getattr(media, "file_name", None)
     if not file_name and message.photo:
         file_name = "photo.jpg"  # fallback name for photos
-    
+
     file_size = getattr(media, "file_size", 0)
     file_type = message.media  # e.g., "document", "video", etc.
     file_tg_id = media.file_id
@@ -59,20 +52,20 @@ async def save_file(client, message: Message):
     start_link = f"https://t.me/{bot_username}?start={file_key}"
 
     reply_text = (
-        f"📤 *File Uploaded Successfully!*\n\n"
-        f"📁 *Name:* `{escape_markdown(file_name or 'Unknown')}`\n"
-        f"📏 *Size:* `{round(file_size / 1024 / 1024, 2)} MB`\n"
-        f"📦 *Type:* `{escape_markdown(file_type)}`\n"
-        f"⚙️ *File ID:* `{escape_markdown(file_key)}`\n\n"
-        f"🔗 *Shareable Link:*\n[Click Here]({start_link})\n\n"
-        f"📥 *Send this link to anyone to let them download your file instantly!*"
+        "📤 File Uploaded Successfully!\n\n"
+        f"📁 Name: {file_name or 'Unknown'}\n"
+        f"📏 Size: {round(file_size / 1024 / 1024, 2)} MB\n"
+        f"📦 Type: {file_type}\n"
+        f"⚙️ File ID: {file_key}\n\n"
+        f"🔗 Shareable Link:\n{start_link}\n\n"
+        "📥 Send this link to anyone to let them download your file instantly!"
     )
 
     await message.reply_text(
         reply_text,
-        disable_web_page_preview=True,
-        parse_mode="MarkdownV2"
+        disable_web_page_preview=True
     )
+
 
 @app.on_message(filters.private & filters.command("start"))
 async def send_file(client, message: Message):
@@ -81,34 +74,29 @@ async def send_file(client, message: Message):
         file_key = args[1]
         if file_key in FILE_DB:
             file_data = FILE_DB[file_key]
-            caption = f"📥 *Here's your file!*\n📁 `{escape_markdown(file_data['file_name'] or 'Unknown')}`"
-            
-            # Send according to media type
+            caption = f"📥 Here's your file!\n📁 {file_data['file_name'] or 'Unknown'}"
+
             file_type = file_data["file_type"]
             file_id = file_data["file_id"]
 
             if file_type == "document":
-                await message.reply_document(file_id, caption=caption, parse_mode="MarkdownV2")
+                await message.reply_document(file_id, caption=caption)
             elif file_type == "video":
-                await message.reply_video(file_id, caption=caption, parse_mode="MarkdownV2")
+                await message.reply_video(file_id, caption=caption)
             elif file_type == "audio":
-                await message.reply_audio(file_id, caption=caption, parse_mode="MarkdownV2")
+                await message.reply_audio(file_id, caption=caption)
             elif file_type == "photo":
-                await message.reply_photo(file_id, caption=caption, parse_mode="MarkdownV2")
+                await message.reply_photo(file_id, caption=caption)
             else:
-                # fallback to document
-                await message.reply_document(file_id, caption=caption, parse_mode="MarkdownV2")
+                await message.reply_document(file_id, caption=caption)
         else:
-            await message.reply_text(
-                "❌ *Sorry, this file was not found or has expired.*",
-                parse_mode="MarkdownV2"
-            )
+            await message.reply_text("❌ Sorry, this file was not found or has expired.")
     else:
         await message.reply_text(
-            "👋 *Welcome to FileToLinks Bot!*\n\n"
-            "🚀 _Send me any file, and I will generate a secure, shareable Telegram link for you instantly._\n\n"
-            "📥 Just send a file to get started!",
-            parse_mode="MarkdownV2"
+            "👋 Welcome to FileToLinks Bot!\n\n"
+            "🚀 Send me any file, and I will generate a secure, shareable Telegram link for you instantly.\n\n"
+            "📥 Just send a file to get started!"
         )
+
 
 app.run()
