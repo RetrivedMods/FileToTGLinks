@@ -2,6 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 import os
 import json
+import asyncio
 from dotenv import load_dotenv
 from flask import Flask
 import threading
@@ -35,7 +36,7 @@ bot = Client(
 @bot.on_message(filters.private & filters.command("help"))
 async def help_command(client, message: Message):
     await message.reply_text(
-       "**👋 Welcome to FileToLinks Bot**\n"
+        "**👋 Welcome to FileToLinks Bot**\n"
         "🚀 Your personal file uploader and sharer made simple.\n\n"
         "**📦 What Can I Do?**\n"
         "• Convert any file you send into a shareable download link.\n"
@@ -47,10 +48,10 @@ async def help_command(client, message: Message):
         "3️⃣ Get your download link with file info and a copyable link.\n\n"
         "**📌 Limitations:**\n"
         "• Max file size depends on Telegram limits (~2GB).\n"
-        "• Link availability depends on Telegram server availability.\n"
+        "• Files sent by link will be **deleted after 2 minutes**.\n"
         "• This bot uses Telegram's CDN; files aren't stored externally.\n\n"
         "**🛠 Need Help?**\n"
-        "For issues or suggestions, contact the dev: [@WClientOwner](https://t.me/WClientOwner)\n\n"
+        "Contact the dev: [@WClientOwner](https://t.me/WClientOwner)\n\n"
         "**ℹ️ Commands:**\n"
         "`/start` - Show welcome/help or retrieve file\n"
         "`/help` - Display this help section again."
@@ -63,9 +64,8 @@ async def save_file(client, message: Message):
         file_id = str(sent.id)
 
         media = message.document or message.video or message.audio or message.photo
-
         if isinstance(media, list):
-            media = media[-1]  # highest quality photo
+            media = media[-1]
 
         file_name = getattr(media, "file_name", "Unknown")
         file_size = getattr(media, "file_size", 0)
@@ -84,12 +84,12 @@ async def save_file(client, message: Message):
         start_link = f"https://t.me/{bot_username}?start={file_id}"
 
         await message.reply_text(
-             f"**📤 File Uploaded!**\n\n"
+            f"**📤 File Uploaded!**\n\n"
             f"**📁 Name:** `{file_name}`\n"
             f"**📏 Size:** `{round(file_size / 1024 / 1024, 2)} MB`\n"
             f"**📦 Type:** `{file_type}`\n"
             f"**⚙️ Hash:** `{file_id}`\n\n"
-            f"**🔗 Share Link:** (`{start_link}`)",
+            f"**🔗 Share Link:** [`Click Here`]({start_link})",
             disable_web_page_preview=True
         )
     except Exception as e:
@@ -105,46 +105,30 @@ async def send_file(client, message: Message):
                 file_data = FILE_DB[file_id]
                 file_type = file_data["file_type"].lower()
 
+                caption = (
+                    f"📥 **Your file is ready!**\n\n"
+                    f"📁 **Name:** `{file_data['file_name']}`\n"
+                    f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
+                    f"✨ **Powered by** [RetrivedMods](https://t.me/RetrivedMods)\n\n"
+                    f"⏳ **Note:** This message will be deleted in 2 minutes."
+                )
+
                 if "document" in file_type:
-                    await message.reply_document(
-                        file_data["file_id"],
-                      caption=  f"📥 **Your file is ready!**\n\n"
-                    f"📁 **Name:** `{file_data['file_name']}`\n"
-                    f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
-                    f"✨ **Powered by** [RetrivedMods](https://t.me/RetrivedMods)"
-                    )
+                    sent = await message.reply_document(file_data["file_id"], caption=caption)
                 elif "video" in file_type:
-                    await message.reply_video(
-                        file_data["file_id"],
-                        caption=  f"📥 **Your file is ready!**\n\n"
-                    f"📁 **Name:** `{file_data['file_name']}`\n"
-                    f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
-                    f"✨ **Powered by** [RetrivedMods](https://t.me/RetrivedMods)"
-                    )
+                    sent = await message.reply_video(file_data["file_id"], caption=caption)
                 elif "audio" in file_type:
-                    await message.reply_audio(
-                        file_data["file_id"],
-                       caption=  f"📥 **Your file is ready!**\n\n"
-                    f"📁 **Name:** `{file_data['file_name']}`\n"
-                    f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
-                    f"✨ **Powered by** [RetrivedMods](https://t.me/RetrivedMods)"
-                    )
+                    sent = await message.reply_audio(file_data["file_id"], caption=caption)
                 elif "photo" in file_type:
-                    await message.reply_photo(
-                        file_data["file_id"],
-                        caption=  f"📥 **Your file is ready!**\n\n"
-                    f"📁 **Name:** `{file_data['file_name']}`\n"
-                    f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
-                    f"✨ **Powered by** [RetrivedMods](https://t.me/RetrivedMods)"
-                    )
+                    sent = await message.reply_photo(file_data["file_id"], caption=caption)
                 else:
-                    await message.reply_document(
-                        file_data["file_id"],
-                         caption=  f"📥 **Your file is ready!**\n\n"
-                    f"📁 **Name:** `{file_data['file_name']}`\n"
-                    f"🔗 **Type:** `{file_data['file_type'].split('.')[-1].upper()}`\n\n"
-                    f"✨ **Powered by** [RetrivedMods](https://t.me/RetrivedMods)"
-                    )
+                    sent = await message.reply_document(file_data["file_id"], caption=caption)
+
+                # Delete the message after 2 minutes
+                await asyncio.sleep(120)
+                await sent.delete()
+                await message.delete()
+
             else:
                 await message.reply_text("❌ File not found or expired.")
         else:
@@ -158,11 +142,10 @@ async def send_file(client, message: Message):
                     "**✨ Fast. Premium. Easy.**"
                 )
             )
-
     except Exception as e:
         await message.reply_text(f"❌ Error: {str(e)}")
 
-# Flask app to keep web service alive on Render
+# Flask app to keep the bot alive on services like Render
 app = Flask("")
 
 @app.route("/")
@@ -174,9 +157,6 @@ def run_flask():
     app.run(host="0.0.0.0", port=port)
 
 if __name__ == "__main__":
-    import threading
-    # Run Flask in background thread
     threading.Thread(target=run_flask).start()
-
     print("Bot is starting...")
     bot.run()
