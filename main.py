@@ -89,7 +89,7 @@ async def save_file(client, message: Message):
             f"**📏 Size:** `{round(file_size / 1024 / 1024, 2)} MB`\n"
             f"**📦 Type:** `{file_type}`\n"
             f"**⚙️ Hash:** `{file_id}`\n\n"
-            f"**🔗 Share Link:** [`Click Here`]({start_link})",
+            f"**🔗 Share Link:** `{start_link}`",
             disable_web_page_preview=True
         )
     except Exception as e:
